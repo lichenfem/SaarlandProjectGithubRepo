@@ -60,6 +60,23 @@ def LoadNumericMatrixInMatFile(MatFile, variables):
 
     return extract
 
+def WriteNumericMatrix2MatFile(MatFile, dict):
+    """
+    @param MatFile: str, full path to mat file
+    @param dict: numerical arrays to be stored
+    """
+    import scipy.io
+    assert MatFile.split('.')[-1] == 'mat', 'File name ends should end with .mat'
+
+    for val in dict.values():
+        if isinstance(val, np.ndarray) or isinstance(val, float) or isinstance(val, int):
+            continue
+        else:
+            msg = 'Type ' + str(type(val)) + ' not permitted to write to mat file.'
+            raise ValueError(msg)
+    scipy.io.savemat(MatFile, dict)
+    return
+
 if __name__=="__main":
     # test loading
 
