@@ -1,0 +1,9 @@
+# compiler foders
+.idea/
+__pycache__/
+
+# folder negated by user
+CroSec[1-9]/
+CroSec10/
+
+
