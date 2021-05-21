@@ -5,7 +5,7 @@ from mapmesh_aio import HOLTRICS, findbound
 from LoadDatainMatFile import LoadNumericMatrixInMatFile, WriteNumericMatrix2MatFile
 import warnings
 from scipy.spatial import Delaunay
-
+from PlotProfileMesh import PlotSaveHollowTri
 
 def cart2pol(x, y):
     """
@@ -41,7 +41,7 @@ def cart2pol(x, y):
     else:
         raise ValueError
 
-    assert (phi>=0) and (phi<2*np.pi)
+    assert (phi >= 0) and (phi < 2*np.pi)
     return (rho, phi)
 
 
@@ -124,8 +124,8 @@ def PolarCroSec2CartCroSec(rho0, phi0, rho1, phi1, t):
         "rho0, phi0, rho1, phi1, t should be of identical length!"
     assert (rho0 > 0).all(), "All in rho0 should be positive!"
     assert (rho1 > 0).all(), "All in rho1 should be positive!"
-    assert (rho0 >= 2 * np.pi) and (rho0 < 4 * np.pi)
-    assert (rho1 >= 2 * np.pi) and (rho1 < 4 * np.pi)
+    assert (phi0 >= 2 * np.pi).all() and (phi0 < 4 * np.pi).all()
+    assert (phi1 >= 2 * np.pi).all() and (phi1 < 4 * np.pi).all()
 
 
     XYVertCroSec = np.zeros((nCroSec, 6))   # init array to store corner x y coordinates
@@ -135,8 +135,8 @@ def PolarCroSec2CartCroSec(rho0, phi0, rho1, phi1, t):
         RHO0 = rho0[i]
         PHI0 = phi0[i]  # rho, phi of 1st corners
 
-        RHO1 = rho0[i]
-        PHI1 = phi0[i]  # rho, phi of 2nd corners
+        RHO1 = rho1[i]
+        PHI1 = phi1[i]  # rho, phi of 2nd corners
 
         x0, y0 = pol2cart(RHO0, PHI0)
         x1, y1 = pol2cart(RHO1, PHI1)
@@ -177,8 +177,8 @@ def UpdateCroSecFolders(XYVertCroSec, t, FlagOfChange=None):
 
     # regenerate genTriCros/shift2centroid.mat
     for (intid, CroSecFolder) in zip(index, CroSecFolders):
-        Po0 = XYVertCroSec[intid][:2]                    # [x1, y1]
-        Po1 = XYVertCroSec[intid][2:4]                   # [x2, y2]
+        Po0 = XYVertCroSec[intid][:2].tolist()                    # [x1, y1]
+        Po1 = XYVertCroSec[intid][2:4].tolist()                   # [x2, y2]
         thick = t[intid]
 
         section = HOLTRICS([0, 0], Po0, Po1, thick)         # cross section
@@ -221,6 +221,29 @@ def UpdateCroSecFolders(XYVertCroSec, t, FlagOfChange=None):
                                                        'bound_edge': bound_edge.astype('float') + 1,
                                                        'bgp': bgp.reshape((-1, 1)).astype('float') + 1})
 
+def PlotAllCroSecs(workdir):
+    """
+    archive mesh of CroSec
+    @param workdir: str, parent folder to all CroSecXX folders
+    @return:
+    """
+    msg = 'Cross sections plotting activated!\Deactivate for better performance!'
+    warnings.warn(msg, RuntimeWarning)
+
+    CroSecFolders = []
+    for (root, dirs, files) in os.walk(workdir):
+        if root == workdir:
+            for dir in dirs:
+                if dir.startswith('CroSec'):
+                    CroSecFolders.append(dir)
+
+    if len(CroSecFolders) == 0:
+        raise RuntimeError('No CroSec folders in ' + workdir)
+
+    for CroSecFolder in CroSecFolders:
+        print('Plotting ' + CroSecFolder + '...')
+        PlotSaveHollowTri(CroSecFolder)
+
 
 if __name__=="__main__":
 
@@ -228,11 +251,27 @@ if __name__=="__main__":
     import sys
     import os
 
-    debug = 0   # 1 for debug
+    workdir = os.getcwd()
+
+    debug = 1   # 1 for debug
     if debug:
         warnings.warn('Running in testing mode! Not for Martin', RuntimeWarning)
-        CroSecShapeMatFile = './node_data_trivert_strut1.mat'
-        t = 0.01*np.ones(10)
+
+        # CroSecShapeMatFile = './node_data_trivert_strut1.mat'
+        # t = 0.01*np.ones(10)
+
+
+        warnings.warn('Debugging SetShapeOfCroSec Readin ...', RuntimeWarning)
+        rho_phiMatFile = os.path.join(os.getcwd(), 'rho_phi.mat')   # path of rho_phi.mat file
+        extract = LoadNumericMatrixInMatFile(rho_phiMatFile, ['rho0', 'phi0', 'rho1', 'phi1', 't'])
+        rho0 = extract['rho0']
+        phi0 = extract['phi0']
+        rho1 = extract['rho1']
+        phi1 = extract['phi1']
+        t = extract['t']
+
+        XYVertCroSec, t = PolarCroSec2CartCroSec(rho0, phi0, rho1, phi1, t)
+        UpdateCroSecFolders(XYVertCroSec, t, FlagOfChange=None)
     else:
 
         if sys.argv[1] == 'SetInitial':
@@ -247,6 +286,8 @@ if __name__=="__main__":
                 XYVertCroSec = LoadNumericMatrixInMatFile(CroSecShapeMatFile, ['trivert'])['trivert']   # cartesian coordinates of cross sections
 
                 UpdateCroSecFolders(XYVertCroSec, t, FlagOfChange=None)
+
+                PlotAllCroSecs(workdir)     # plotting mesh of cross sections
 
                 # save rho0, phi0, rho1, phi1 to mat file
                 root = os.getcwd()
@@ -274,6 +315,8 @@ if __name__=="__main__":
 
                 XYVertCroSec, t = PolarCroSec2CartCroSec(rho0, phi0, rho1, phi1, t)
                 UpdateCroSecFolders(XYVertCroSec, t, FlagOfChange=None)
+
+
             except:
                 msg = 'Calling SetShapeOfCroSec Readin failed.'
                 raise RuntimeError(msg)
