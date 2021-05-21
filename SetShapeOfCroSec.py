@@ -253,7 +253,7 @@ if __name__=="__main__":
 
     workdir = os.getcwd()
 
-    debug = 1   # 1 for debug
+    debug = 0   # 1 for debug
     if debug:
         warnings.warn('Running in testing mode! Not for Martin', RuntimeWarning)
 
@@ -261,6 +261,8 @@ if __name__=="__main__":
         # t = 0.01*np.ones(10)
 
 
+
+        # ---------------------------------------------------------------------------------
         warnings.warn('Debugging SetShapeOfCroSec Readin ...', RuntimeWarning)
         rho_phiMatFile = os.path.join(os.getcwd(), 'rho_phi.mat')   # path of rho_phi.mat file
         extract = LoadNumericMatrixInMatFile(rho_phiMatFile, ['rho0', 'phi0', 'rho1', 'phi1', 't'])
@@ -269,9 +271,10 @@ if __name__=="__main__":
         rho1 = extract['rho1']
         phi1 = extract['phi1']
         t = extract['t']
-
         XYVertCroSec, t = PolarCroSec2CartCroSec(rho0, phi0, rho1, phi1, t)
         UpdateCroSecFolders(XYVertCroSec, t, FlagOfChange=None)
+        # ---------------------------------------------------------------------------------
+
     else:
 
         if sys.argv[1] == 'SetInitial':
@@ -316,6 +319,7 @@ if __name__=="__main__":
                 XYVertCroSec, t = PolarCroSec2CartCroSec(rho0, phi0, rho1, phi1, t)
                 UpdateCroSecFolders(XYVertCroSec, t, FlagOfChange=None)
 
+                PlotAllCroSecs(workdir)  # plotting mesh of cross sections
 
             except:
                 msg = 'Calling SetShapeOfCroSec Readin failed.'
