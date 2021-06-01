@@ -6,4 +6,7 @@ __pycache__/
 CroSec[1-9]/
 CroSec10/
 
+# exclude mat file
+*.mat
+
 

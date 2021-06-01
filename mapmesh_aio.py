@@ -512,7 +512,7 @@ def findbound(pts, tris):
             tmp = tris[i][1]
             tris[i][1] = tris[i][2]
             tris[i][2] = tmp
-            print(['triangle i = ', i, ' is reverted.\n'])
+            # print(['triangle i = ', i, ' is reverted.\n'])
         elif determinant == 0:
             raise RuntimeError('colinear nodes for triangle')
 

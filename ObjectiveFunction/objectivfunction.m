@@ -1,6 +1,10 @@
 %%objectiv function
 
-function out = objectivfunction_new(type, strut)
+function out = objectivfunction(type, strut)
+% input:
+% type: str, e.g. 'tension'
+% strut: str, e.g. 'strut1'
+
 
 % 10 nodes (id 2-11), 6 dofs per node, each row is for 1 increment
 % last 6 columns stores reaction at free end
@@ -9,7 +13,7 @@ FE=zeros(11,66);    % volume element result
 
 %-------------------------------------------------------------------------%
 %load beam data
-load([type,'011'], 'reacti');
+load([type,'011'], 'reacti');       % load reacti from 'type011.mat'
 reacti=full(reacti);    % reac = [2,1;2,2;2,3;2,4;2,5;2,6;....;11,1;11,2;11,3;11,4;11,5;11,6]
 
 %BEAM(:,1..6)= beam1 disp_xyz, rot_xyz ..... BEAM(:,56..60)=beam10

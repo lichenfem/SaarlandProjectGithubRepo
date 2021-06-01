@@ -124,8 +124,8 @@ def PolarCroSec2CartCroSec(rho0, phi0, rho1, phi1, t):
         "rho0, phi0, rho1, phi1, t should be of identical length!"
     assert (rho0 > 0).all(), "All in rho0 should be positive!"
     assert (rho1 > 0).all(), "All in rho1 should be positive!"
-    assert (phi0 >= 2 * np.pi).all() and (phi0 < 4 * np.pi).all()
-    assert (phi1 >= 2 * np.pi).all() and (phi1 < 4 * np.pi).all()
+    # assert (phi0 >= 2 * np.pi).all() and (phi0 < 4 * np.pi).all()
+    # assert (phi1 >= 2 * np.pi).all() and (phi1 < 4 * np.pi).all()
 
 
     XYVertCroSec = np.zeros((nCroSec, 6))   # init array to store corner x y coordinates
@@ -150,12 +150,13 @@ def PolarCroSec2CartCroSec(rho0, phi0, rho1, phi1, t):
     return XYVertCroSec, t
 
 
-def UpdateCroSecFolders(XYVertCroSec, t, FlagOfChange=None):
+def UpdateCroSecFolders(XYVertCroSec, t, FlagOfChange=None, path='.'):
     """
     update subfolders 'genTriCros' and 'tri_mesh'
-    @param XYVertCroSec: 2d array, 10*6
+    @param XYVertCroSec: 2d array, 10*6, [x1, y1, x2, y2, x3, y3] of vertices of a triangular cross section
     @param t: 1d array
     @param FlagOfChange: None or 1d array of 1/0, FlagOfChange[i] = 1 means CroSeci is changed
+    @param path: str, full path to the parent folder storing all CroSecXX subfolders
     @return: none
     """
     if FlagOfChange == None:
@@ -163,7 +164,12 @@ def UpdateCroSecFolders(XYVertCroSec, t, FlagOfChange=None):
     else:
         index = np.nonzero(FlagOfChange.astype(bool))[0]    # 1d array of positions
 
-    CroSecFolders = ['./CroSec' + str(i) for i in [i+1 for i in index]]  # folders of cross sections
+    # check existence of folders
+    assert os.path.isdir(path)
+    CroSecFolders = [os.path.join(path, 'CroSec' + str(i)) for i in [i+1 for i in index]]   # folders of cross sections
+    for folder in CroSecFolders:
+        assert os.path.isdir(folder), "Folder: " + folder + ' not existent!'
+
 
     # generate Delaunay triangulation in a reference triangle
     vertices = np.array([(0, 1), (0, 0), (1, 0)], dtype=float)
@@ -217,9 +223,9 @@ def UpdateCroSecFolders(XYVertCroSec, t, FlagOfChange=None):
 
         coords_ien_bgpfile = os.path.join(trimeshFolder, 'coords_ien_bgp.mat')
         WriteNumericMatrix2MatFile(coords_ien_bgpfile, {'coords': allpoints,
-                                                       'ien': alltris + 1,
-                                                       'bound_edge': bound_edge.astype('float') + 1,
-                                                       'bgp': bgp.reshape((-1, 1)).astype('float') + 1})
+                                                        'ien': alltris + 1,
+                                                        'bound_edge': bound_edge.astype('float') + 1,
+                                                        'bgp': bgp.reshape((-1, 1)).astype('float') + 1})
 
 def PlotAllCroSecs(workdir):
     """
@@ -230,12 +236,13 @@ def PlotAllCroSecs(workdir):
     msg = 'Cross sections plotting activated!\Deactivate for better performance!'
     warnings.warn(msg, RuntimeWarning)
 
+    # find folders of cross sections
     CroSecFolders = []
     for (root, dirs, files) in os.walk(workdir):
         if root == workdir:
             for dir in dirs:
-                if dir.startswith('CroSec'):
-                    CroSecFolders.append(dir)
+                if dir.startswith('CroSec') and dir[-1].isdigit():
+                    CroSecFolders.append(os.path.join(workdir, dir))
 
     if len(CroSecFolders) == 0:
         raise RuntimeError('No CroSec folders in ' + workdir)
@@ -317,7 +324,7 @@ if __name__=="__main__":
                 t = extract['t']
 
                 XYVertCroSec, t = PolarCroSec2CartCroSec(rho0, phi0, rho1, phi1, t)
-                UpdateCroSecFolders(XYVertCroSec, t, FlagOfChange=None)
+                UpdateCroSecFolders(XYVertCroSec, t, FlagOfChange=None, path=workdir)
 
                 PlotAllCroSecs(workdir)  # plotting mesh of cross sections
 

@@ -7,7 +7,7 @@ from datetime import datetime
 def PlotSaveHollowTri(CroSecFolder):
     """
     plot cross section in a CroSecXX folder
-    @param CroSecFolder: str, path a CroSecXX folder
+    @param CroSecFolder: str, path to a CroSecXX folder
     @return:
     """
     if CroSecFolder.endswith('/'):
