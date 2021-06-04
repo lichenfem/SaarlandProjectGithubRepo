@@ -1,7 +1,7 @@
 import os
 import matplotlib.pyplot as plt
 import numpy as np
-from LoadDatainMatFile import LoadNumericMatrixInMatFile
+from MiscPyUtilities.pipeMAT import LoadMatFile2NumpyArray
 from datetime import datetime
 
 def PlotSaveHollowTri(CroSecFolder):
@@ -18,14 +18,14 @@ def PlotSaveHollowTri(CroSecFolder):
     if not os.path.isfile(shift2centroidFile):
         raise FileNotFoundError(shift2centroidFile + 'not exist!')
 
-    extract = LoadNumericMatrixInMatFile(shift2centroidFile, ['Po', 'Pi'])
+    extract = LoadMatFile2NumpyArray(shift2centroidFile, ['Po', 'Pi'])
     Po = extract['Po']          # vertices on external bound
     Pi = extract['Pi']          # vertices on internal bound
 
 
     # load mesh
     coords_ien_bgpFile = os.path.join(CroSecFolder, 'tri_mesh', 'coords_ien_bgp.mat')
-    extract = LoadNumericMatrixInMatFile(coords_ien_bgpFile, ['ien', 'coords'])
+    extract = LoadMatFile2NumpyArray(coords_ien_bgpFile, ['ien', 'coords'])
     ien = extract['ien']        # index starts from 1
     coords = extract['coords']  # x y coordinates of mesn nodes
 

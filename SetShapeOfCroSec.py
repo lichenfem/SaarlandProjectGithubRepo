@@ -2,9 +2,10 @@ import os
 import sys
 import numpy as np
 from mapmesh_aio import HOLTRICS, findbound
-from LoadDatainMatFile import LoadNumericMatrixInMatFile, WriteNumericMatrix2MatFile
+from MiscPyUtilities.pipeMAT import LoadMatFile2NumpyArray, WriteNumpyArray2MatFile
 import warnings
 from PlotProfileMesh import PlotSaveHollowTri
+from MiscPyUtilities.triangleGeometry import checkAnticlockwise
 
 
 def cart2pol(x, y, phase=0):
@@ -61,22 +62,6 @@ def pol2cart(rho, phi):
     return (x, y)
 
 
-def checkanticlockwise(XYVertCroSec):
-    """
-    check of vertices in XYVertCroSec are anticlockwise
-    @param XYVertCroSec: 2d array, XYVertCroSec[i] = [x1, y1, x2, y2, x3, y3] for external boundary of triangular cross
-                          section centered at (0, 0)
-    @return:
-    """
-    for i in range(XYVertCroSec.shape[0]):
-        x1, y1, x2, y2, x3, y3 = XYVertCroSec[i, :]
-
-        if (x2-x1)*(y3-y1)-(x3-x1)*(y2-y1) < 0:
-            msg = "Clockwise node sequence detected in XYVertCroSec is clockwise!"
-            raise ValueError(msg)
-    return
-
-
 def CartCroSec2PolarCroSec(XYVertCroSec, phase=2*np.pi):
     """
     transform cartesian coordinates of cross section vertices to polar coordinates
@@ -85,7 +70,10 @@ def CartCroSec2PolarCroSec(XYVertCroSec, phase=2*np.pi):
     @return:
             PolVertCroSec: 2d array, PolVertCroSec[i] = [rho0, phi1, rho1, ohi1, rho3, phi3], phi is in [2*pi, 4*pi]
     """
-    checkanticlockwise(XYVertCroSec)    # check if vertices of triangles are given in anti-clockwise sequence
+    seq = checkAnticlockwise(XYVertCroSec)  # check if vertices of triangles are given in anti-clockwise sequence
+    if not seq.all():
+        raise RuntimeError()
+
 
     nCroSec = XYVertCroSec.shape[0]     # number of cross sections
 
@@ -191,7 +179,7 @@ def UpdateCroSecFolders(XYVertCroSec, t, path='.', NUMELEMPEREDGE=5):
 
         # write to genTriCros/shift2centroid.mat
         shift2centroidfile = os.path.join(genTriCrosFolder, 'shift2centroid.mat')
-        WriteNumericMatrix2MatFile(shift2centroidfile, {'Po': Po,       # 2d array
+        WriteNumpyArray2MatFile(shift2centroidfile, {'Po': Po,       # 2d array
                                                         'Pi': Pi,       # 2d array
                                                         'thick': thick  # float
                                                         })
@@ -211,7 +199,7 @@ def UpdateCroSecFolders(XYVertCroSec, t, path='.', NUMELEMPEREDGE=5):
 
         # write to tri_mesh/coords_ien_bgp.mat
         coords_ien_bgpfile = os.path.join(trimeshFolder, 'coords_ien_bgp.mat')
-        WriteNumericMatrix2MatFile(coords_ien_bgpfile, {'coords': allpoints,
+        WriteNumpyArray2MatFile(coords_ien_bgpfile, {'coords': allpoints,
                                                         'ien': alltris + 1,     # index in matlab starts from 1
                                                         'bound_edge': bound_edge.astype('float') + 1,
                                                         'bgp': bgp.reshape((-1, 1)).astype('float') + 1})
@@ -257,7 +245,7 @@ if __name__=="__main__":
         # ---------------------------------------------------------------------------------
         warnings.warn('Debugging SetShapeOfCroSec Readin ...', RuntimeWarning)
         rho_phiMatFile = os.path.join(workdir, 'rho_phi.mat')   # path of rho_phi.mat file
-        content = LoadNumericMatrixInMatFile(rho_phiMatFile, ['rho0', 'phi0', 'rho1', 'phi1', 't'])
+        content = LoadMatFile2NumpyArray(rho_phiMatFile, ['rho0', 'phi0', 'rho1', 'phi1', 't'])
         rho1 = content['rho0']
         phi1 = content['phi0']
         rho2 = content['rho1']
@@ -288,7 +276,7 @@ if __name__=="__main__":
 
             assert t.shape[0] == 10, str(t.shape[0]) + " cross section thickness are given, 10 expected!"
 
-            content = LoadNumericMatrixInMatFile(CroSecShapeMatFile, ['trivert', 'node', 'data'])
+            content = LoadMatFile2NumpyArray(CroSecShapeMatFile, ['trivert', 'node', 'data'])
             XYVertCroSec = content['trivert']       # cartesian coordinates of cross section vertices
 
             PolVertCroSec = CartCroSec2PolarCroSec(XYVertCroSec, phase=2*np.pi)
@@ -299,7 +287,7 @@ if __name__=="__main__":
 
             # save rho0, phi0, rho1, phi1 to mat file
             rho_phiMatFile = os.path.join(workdir, 'rho_phi.mat')
-            WriteNumericMatrix2MatFile(rho_phiMatFile, {'rho0': PolVertCroSec[:, 0],
+            WriteNumpyArray2MatFile(rho_phiMatFile, {'rho0': PolVertCroSec[:, 0],
                                                         'phi0': PolVertCroSec[:, 1],
                                                         'rho1': PolVertCroSec[:, 2],
                                                         'phi1': PolVertCroSec[:, 3],
@@ -311,7 +299,7 @@ if __name__=="__main__":
             if not '/' in rho_phiMatFile:
                 rho_phiMatFile = os.path.join(workdir, rho_phiMatFile)
 
-            content = LoadNumericMatrixInMatFile(rho_phiMatFile, ['rho0', 'phi0', 'rho1', 'phi1', 't'])
+            content = LoadMatFile2NumpyArray(rho_phiMatFile, ['rho0', 'phi0', 'rho1', 'phi1', 't'])
             rho0 = content['rho0']
             phi0 = content['phi0']
             rho1 = content['rho1']
