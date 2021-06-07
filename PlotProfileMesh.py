@@ -39,7 +39,7 @@ def PlotSaveHollowTri(CroSecFolder):
     x.append(x[0])
     y = Po[:, 1].tolist()
     y.append(y[0])
-    ax.plot(x, y, 'go--', linewidth=1, label='outer profile')
+    ax.plot(x, y, 'g--', linewidth=1, label='outer profile')
     for i in range(3):
         ax.text(x[i], y[i], str(i), fontsize=12)    # annotate node index
 
@@ -48,7 +48,7 @@ def PlotSaveHollowTri(CroSecFolder):
     x.append(x[0])
     y = Pi[:, 1].tolist()
     y.append(y[0])
-    ax.plot(x, y, 'ro--', linewidth=1, label='inner profile')
+    ax.plot(x, y, 'r--', linewidth=1, label='inner profile')
 
     # plot triangular mesh
     ax.triplot(coords[:, 0], coords[:, 1], ien - 1, linewidth=0.1)
