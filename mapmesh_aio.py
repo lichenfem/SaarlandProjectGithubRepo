@@ -17,6 +17,21 @@ from MiscPyUtilities.replaceElementsInArray import replaceIntArray as replace
 import warnings
 
 
+class TooThick(Exception):
+    """
+    exception type for invalid wall thickness
+    """
+    def __init__(self, gap):
+        self.gap = gap
+
+
+class ClockwiseVertSeq(Exception):
+    """
+    exception type for clockwise sequence of vertices
+    """
+    pass
+
+
 class HOLTRICS:
     """
     class of hollow triangular cross section
@@ -37,7 +52,9 @@ class HOLTRICS:
         self.x0 = np.array(x0)
         self.x1 = np.array(x1)
         self.setx2()            # compute coordinates of vertex 3
-        self.checkValidthicAndAnticlockwise()   # check valid thickness and anticlockwise vertex sequence
+
+        self.checkAnticlockwiseVertSeq()
+        self.checkValidThickness()
 
         # coordinates of internal triangle, x[N]i is nearest to x[N]
         self.setxi()            # compute vertices of internal edges
@@ -52,12 +69,7 @@ class HOLTRICS:
         self.x2 = 3 * self.xc - self.x0 - self.x1
 
 
-    def checkValidthicAndAnticlockwise(self):
-        Vert = np.array([self.x0, self.x1, self.x2]).flatten()
-        r = TriInscribedCircleRadius(Vert)
-        if self.t >= r:
-            raise RuntimeError('Cross section thickness exceeds radius of inscribed circle!')
-
+    def checkAnticlockwiseVertSeq(self):
 
         # adjust sequence of node if required
         Anticlockwise = checkAnticlockwise(np.array([self.x0.tolist(),
@@ -65,11 +77,19 @@ class HOLTRICS:
                                                      self.x2.tolist()
                                                      ]).flatten())
         if not Anticlockwise.all():
-            # adjust sequence
-            tmp = self.x1
-            self.x1 = self.x2
-            self.x2 = tmp
-            warnings.warn('Node sequence reversed.')
+            raise ClockwiseVertSeq()
+            # # adjust sequence
+            # tmp = self.x1
+            # self.x1 = self.x2
+            # self.x2 = tmp
+            # warnings.warn('Node sequence reversed.')
+
+
+    def checkValidThickness(self):
+        Vert = np.array([self.x0, self.x1, self.x2]).flatten()
+        r = TriInscribedCircleRadius(Vert)
+        if self.t >= r:
+            raise TooThick(abs(r - self.t))
 
 
     def setxi(self):

@@ -112,16 +112,16 @@ for i = 1:Nmidcs
                             % x (w.r.t. r1) ~ 0, no absolute zero because
                             % of misalignment
     
-    figure;
-    axis equal;
-    hold on
-    plot(ppt_loc(:,2), ppt_loc(:,3), 'or');
-    
-    % generate minimum bounding triangle
-    [trix,triy] = minboundtri(ppt_loc(:,2),ppt_loc(:,3));
-    hold on
-    plot(trix, triy, '-r','LineWidth',2);
-    hold off
+%     figure;
+%     axis equal;
+%     hold on
+%     plot(ppt_loc(:,2), ppt_loc(:,3), 'or');
+%     
+%     % generate minimum bounding triangle
+%     [trix,triy] = minboundtri(ppt_loc(:,2),ppt_loc(:,3));
+%     hold on
+%     plot(trix, triy, '-r','LineWidth',2);
+%     hold off
     
     % vert = [x1, y1;x2, y2;x3, y3]
     vert = [trix(1:3), triy(1:3)];
@@ -135,6 +135,46 @@ for i = 1:Nmidcs
     
     close all   % remove all figues
 end
+
+
+% make sure phi of vertex 1 is smaller than vertex 1
+trivert_new = zeros(size(trivert));
+for i = 1:size(trivert, 1)
+    x1 = trivert(i, 1);
+    y1 = trivert(i, 2);
+    
+    x2 = trivert(i, 3);
+    y2 = trivert(i, 4);
+    
+    x3 = trivert(i, 5);
+    y3 = trivert(i, 6);
+    
+    [theta1,rho1] = cart2pol(x1,y1);    % (-pi, pi)
+    [theta2,rho2] = cart2pol(x2,y2);
+    [theta3,rho3] = cart2pol(x3,y3);
+    
+    theta1 = theta1 + pi;
+    theta2 = theta2 + pi;
+    theta3 = theta3 + pi;
+    
+    if theta1 > theta2
+        trivert_new(i,1) = x2;
+        trivert_new(i,2) = y2;
+        trivert_new(i,3) = x3;
+        trivert_new(i,4) = y3;
+        trivert_new(i,5) = x1;
+        trivert_new(i,6) = y1;
+        
+        if theta2 > theta3
+           error('Invalid input!');
+        end
+        
+    else
+        trivert_new(i,:) = trivert(i,:);
+    end
+end
+trivert = trivert_new;
+
 
 % save to mat file
 save('node_data_trivert_strut1.mat', 'node', 'data', 'trivert');

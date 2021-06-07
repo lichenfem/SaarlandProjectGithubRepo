@@ -1,0 +1,91 @@
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2018 The MathWorks, Inc.
+                   R2018a (9.4.0.813654) 64-bit (glnxa64)
+                             February 23, 2018
+
+ 
+To get started, type one of these: helpwin, helpdesk, or demo.
+For product information, visit www.mathworks.com.
+ 
+  datf  =   tension
+
+  nelem =        10  nnode =        11  ndof  =        77  npdof =         8
+  nnodf =         0  ndepn =         0  nincr =        11  noutp =         2
+
+  iincr =         1  incri =           0
+  iiter =         1Starting parallel pool (parpool) using the 'local' profile ...
+connected to 4 workers.
+  conv  = 3.1811e-13
+  outpf = tension001
+
+  iincr =         2  incri =         0.1
+  iiter =         1  conv  =    0.02922
+  iiter =         2  conv  = 0.00043374
+  iiter =         3  conv  = 1.3667e-06
+  outpf = tension002
+
+  iincr =         3  incri =         0.2
+  iiter =         1  conv  =    0.20924
+  iiter =         2  conv  =    0.84112
+  iiter =         3  conv  =   0.023031
+  iiter =         4  conv  = 0.00090193
+  iiter =         5  conv  = 1.1432e-05
+  outpf = tension003
+
+  iincr =         4  incri =         0.3
+  iiter =         1  conv  =   0.059911
+  iiter =         2  conv  =   0.010432
+  iiter =         3  conv  = 0.00028528
+  iiter =         4  conv  = 4.0956e-06
+  outpf = tension004
+
+  iincr =         5  incri =         0.4
+  iiter =         1  conv  =   0.039244
+  iiter =         2  conv  =  0.0064208
+  iiter =         3  conv  = 0.00077624
+  iiter =         4  conv  = 2.8914e-05
+  outpf = tension005
+
+  iincr =         6  incri =         0.5
+  iiter =         1  conv  =   0.017542
+  iiter =         2  conv  =  0.0028235
+  iiter =         3  conv  = 0.00030177
+  iiter =         4  conv  = 2.8728e-06
+  outpf = tension006
+
+  iincr =         7  incri =         0.6
+  iiter =         1  conv  =   0.013677
+  iiter =         2  conv  =  0.0011283
+  iiter =         3  conv  = 9.4267e-06
+  outpf = tension007
+
+  iincr =         8  incri =         0.7
+  iiter =         1  conv  =  0.0072775
+  iiter =         2  conv  =  0.0011414
+  iiter =         3  conv  = 5.7738e-05
+  outpf = tension008
+
+  iincr =         9  incri =         0.8
+  iiter =         1  conv  =  0.0072621
+  iiter =         2  conv  = 0.00043835
+  iiter =         3  conv  = 2.7217e-06
+  outpf = tension009
+
+  iincr =        10  incri =         0.9
+  iiter =         1  conv  =  0.0066049
+  iiter =         2  conv  = 0.00080663
+  iiter =         3  conv  = 0.00011573
+  iiter =         4  conv  = 6.1717e-06
+  outpf = tension010
+
+  iincr =        11  incri =           1
+  iiter =         1  conv  =  0.0055334
+  iiter =         2  conv  = 0.00041354
+  iiter =         3  conv  = 7.6645e-06
+  outpf = tension011
+
+writing reaction forces versus displacements to file. 
+
+
+

@@ -8,6 +8,7 @@ from PlotProfileMesh import PlotSaveHollowTri
 from MiscPyUtilities.triangleGeometry import checkAnticlockwise
 
 
+
 def cart2pol(x, y, phase=0):
     """
     cartisian coordinates to polar coordinates
@@ -238,29 +239,63 @@ if __name__=="__main__":
 
     workdir = os.getcwd()
 
-    debug = 0   # 1 for debug
+    debug = 1   # 1 for debug
     if debug:
         warnings.warn('Running in testing mode! Not for Martin', RuntimeWarning)
 
-        # ---------------------------------------------------------------------------------
-        warnings.warn('Debugging SetShapeOfCroSec Readin ...', RuntimeWarning)
-        rho_phiMatFile = os.path.join(workdir, 'rho_phi.mat')   # path of rho_phi.mat file
-        content = LoadMatFile2NumpyArray(rho_phiMatFile, ['rho0', 'phi0', 'rho1', 'phi1', 't'])
-        rho1 = content['rho0']
-        phi1 = content['phi0']
-        rho2 = content['rho1']
-        phi2 = content['phi1']
-        t = content['t']
+        # -------------------------------------------------
+        # test input of Martin that generates exception of too thick cross section
+        file = os.path.join(os.getcwd(), 'design_para_of_excessively_thickness_20210607.txt')
+        import pandas as pd
+        for line in open(file):
+            print(repr(line))
+        geomconfig = pd.read_csv(file, header=None, delimiter=r"\s+")   # geometrical configuration of cross sections
 
-        assert (rho1 > 0).all() and (rho2 > 0).all()
+        phi0 = np.array(geomconfig[0][:10])
+        phi1 = np.array(geomconfig[0][10:20])
+        rho0 = np.array(geomconfig[0][20:30])
+        rho1 = np.array(geomconfig[0][30:40])
+        t = np.array(geomconfig[0][40:50])
 
-        PolVertCroSec = np.array([rho1, phi1, rho2, phi2, np.zeros(rho1.size), np.zeros(rho1.size)])# rho3/phi3 set to 0
-        PolVertCroSec = PolVertCroSec.transpose()
+        PolVertCroSec = np.zeros((rho0.size, 6))  # init
+        PolVertCroSec[:, 0] = rho0
+        PolVertCroSec[:, 1] = phi0
+        PolVertCroSec[:, 2] = rho1
+        PolVertCroSec[:, 3] = phi1
 
-        XYVertCroSec = PolarCroSec2CartCroSec(PolVertCroSec)
-        UpdateCroSecFolders(XYVertCroSec, t)
-        PlotAllCroSecs(workdir)
-        # ---------------------------------------------------------------------------------
+        XYVertCroSec = PolarCroSec2CartCroSec(PolVertCroSec)  # rho3, phi3 = 0, 0
+        UpdateCroSecFolders(XYVertCroSec, t, path=workdir)
+
+        PlotAllCroSecs(workdir)  # plotting mesh of cross sections
+
+        # cross section 5 prompts error
+        xyvert = np.array([-0.05877377, 0.43822029, 0.0220731, -0.43905166, 0.03670068, 0.00083137])
+        thick = t[4]
+
+        from MiscPyUtilities.triangleGeometry import TriInscribedCircleRadius
+        tmax = TriInscribedCircleRadius(xyvert)
+
+        # -------------------------------------------------
+
+        # # ---------------------------------------------------------------------------------
+        # warnings.warn('Debugging SetShapeOfCroSec Readin ...', RuntimeWarning)
+        # rho_phiMatFile = os.path.join(workdir, 'rho_phi.mat')   # path of rho_phi.mat file
+        # content = LoadMatFile2NumpyArray(rho_phiMatFile, ['rho0', 'phi0', 'rho1', 'phi1', 't'])
+        # rho1 = content['rho0']
+        # phi1 = content['phi0']
+        # rho2 = content['rho1']
+        # phi2 = content['phi1']
+        # t = content['t']
+        #
+        # assert (rho1 > 0).all() and (rho2 > 0).all()
+        #
+        # PolVertCroSec = np.array([rho1, phi1, rho2, phi2, np.zeros(rho1.size), np.zeros(rho1.size)])# rho3/phi3 set to 0
+        # PolVertCroSec = PolVertCroSec.transpose()
+        #
+        # XYVertCroSec = PolarCroSec2CartCroSec(PolVertCroSec)
+        # UpdateCroSecFolders(XYVertCroSec, t)
+        # PlotAllCroSecs(workdir)
+        # # ---------------------------------------------------------------------------------
 
     else:
         # non-debug
