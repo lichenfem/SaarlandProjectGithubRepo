@@ -5,6 +5,7 @@ from mapmesh_aio import TooThick
 import subprocess
 import re
 import csv
+from datetime import datetime
 
 
 def ReturnDateTimeStr():
@@ -37,7 +38,7 @@ def counted(f):
 def TopFunc(GeomCfg, NumOfPadZeros=4, penalty=1e4):
     """
     top function to bridge with dakota
-    @param GeomCfg: dict, {rho0: 1d array, phi0: 1d array, rho1: 1d array, phi1: 1d array}
+    @param GeomCfg: dict, {rho0: 1d array, phi0: 1d array, rho1: 1d array, phi1: 1d array, t: 1d array}
     @return:
         value of objective function
     """
@@ -68,20 +69,32 @@ def TopFunc(GeomCfg, NumOfPadZeros=4, penalty=1e4):
     except TooThick as exc:
         # thickness is too large, predefined objective function value is returned
         ObjectiveFuncValue = penalty*exc.gap**2
-        WriteObjFunValToFile(TopFunc.calls, ObjectiveFuncValue, NumOfPadZeros)  # generate log of objective function
+
+        now = datetime.now()
+        current_time = now.strftime('%Y-%m-%d-%H-%M-%S')
+        WriteObjFunValToFile(current_time, ObjectiveFuncValue, NumOfPadZeros)  # generate log of objective function
+        # WriteObjFunValToFile(TopFunc.calls, ObjectiveFuncValue, NumOfPadZeros)
+
         return ObjectiveFuncValue
     except VertexReverted:
         # phi0 > phi1 for at least one cross section, predefined objective function value is returned
         ObjectiveFuncValue = penalty*max(phi0 - phi1)**2
-        WriteObjFunValToFile(TopFunc.calls, ObjectiveFuncValue, NumOfPadZeros)  # generate log of objective function
+
+        now = datetime.now()
+        current_time = now.strftime('%Y-%m-%d-%H-%M-%S')
+        WriteObjFunValToFile(current_time, ObjectiveFuncValue, NumOfPadZeros)
+        # WriteObjFunValToFile(TopFunc.calls, ObjectiveFuncValue, NumOfPadZeros)  # generate log of objective function
         return ObjectiveFuncValue
     else:   # run if no exception raised
 
         MatlabPath = '/opt/local/MATLAB/R2018a/bin/matlab'  # path of matlab bin
 
+        now = datetime.now()
+        current_time = now.strftime('%Y-%m-%d-%H-%M-%S')
         # --------------------------------------------------
         # evaluate warping function of cross sections
-        logfile = 'EvalWarp' + str(TopFunc.calls).zfill(NumOfPadZeros) + '.txt'
+        # logfile = 'EvalWarp' + str(TopFunc.calls).zfill(NumOfPadZeros) + '.txt'
+        logfile = 'EvalWarp' + current_time + '.txt'
         cmd = MatlabPath + ' -nodesktop -nosplash -r "EvalWarp; quit" >  ' + logfile
 
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
@@ -94,7 +107,7 @@ def TopFunc(GeomCfg, NumOfPadZeros=4, penalty=1e4):
 
         # --------------------------------------------------
         # run beam simulation
-        logfile = 'mtfem' + str(TopFunc.calls).zfill(NumOfPadZeros) + '.txt'
+        logfile = 'mtfem' + current_time + '.txt'
         cmd = MatlabPath + ' -nodesktop -nosplash -r "datf = \'tension\'; mtfem(datf); quit" >  ' + logfile
 
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
@@ -121,7 +134,8 @@ def TopFunc(GeomCfg, NumOfPadZeros=4, penalty=1e4):
 
             # ---------------------------------------------
             # generate csv file to store configuration
-            logfile = 'geomcfg' + str(TopFunc.calls) + '.csv'
+            # logfile = 'geomcfg' + str(TopFunc.calls) + '.csv'
+            logfile = 'geomcfg' + current_time + '.csv'
             f = open(logfile, 'w')
             writer = csv.writer(f)
             row = ['phi0', 'rho0', 'phi1', 'rho1', 't']
@@ -131,10 +145,12 @@ def TopFunc(GeomCfg, NumOfPadZeros=4, penalty=1e4):
                 writer.writerow(row)
             f.close()
             # ---------------------------------------------
-            WriteObjFunValToFile(TopFunc.calls, ObjectiveFuncValue, NumOfPadZeros)     # generate log of objective function
+            # WriteObjFunValToFile(TopFunc.calls, ObjectiveFuncValue, NumOfPadZeros)     # generate log of objective function
+            WriteObjFunValToFile(current_time, ObjectiveFuncValue, NumOfPadZeros)
 
             # change name of tensionFU.mat
-            cmd = 'mv tensionFU.mat ' + 'tensionFU' + str(TopFunc.calls).zfill(NumOfPadZeros) + '.mat'
+            # cmd = 'mv tensionFU.mat ' + 'tensionFU' + str(TopFunc.calls).zfill(NumOfPadZeros) + '.mat'
+            cmd = 'mv tensionFU.mat ' + 'tensionFU' + current_time + '.mat'
             os.popen(cmd)
 
             return ObjectiveFuncValue
@@ -147,6 +163,63 @@ def WriteObjFunValToFile(counetr, ObjFunVal, NumOfPadZeros):
     f = open(logfile, 'w')
     f.write(str(ObjFunVal))
     f.close()
+
+
+
+def Read_param_in(file='params.in', workdir='.'):
+    """
+    read in params.in file from dakota
+    @param file: name of input file
+    @return:
+    """
+    file = os.path.join(workdir, file)
+    f = open(file, 'r')
+    content = f.readlines()
+    f.close()
+
+    geomdata = []
+    for i in range(1, 51):
+        line = content[i].replace('\n', ' ')
+        line = re.sub(r'\s+', ' ', line)        # replace >1 space by 1 space
+        geomdata.append(float(line.split(' ')[1]))
+
+    GeomCfg = {'phi0': np.array(geomdata[:10]),
+               'phi1': np.array(geomdata[10:20]),
+               'rho0': np.array(geomdata[20:30]),
+               'rho1': np.array(geomdata[30:40]),
+               't': np.array(geomdata[40:50]),
+    }
+
+    return GeomCfg
+
+
+def Write_results_out(ObjFunVal, file='results.out', workdir='.'):
+    """
+    write objective function value to results.out
+    @param file: str
+    @param workdir:
+    @return:
+    """
+    file = os.path.join(workdir, file)
+    with open(file, 'w') as f:
+        f.write(str(ObjFunVal))
+    return
+
+
+def TalkToDakota(inputfile='params.in', outputfile='results.out', workdir='.'):
+    """
+    this is interface to talk to Dakota
+    @param inputfile:
+    @param outputfile:
+    @param workdir:
+    @return:
+    """
+    GeomCfg = Read_param_in(inputfile, workdir)
+
+    ObjFunVal = TopFunc(GeomCfg, NumOfPadZeros=4, penalty=1e4)
+
+    Write_results_out(ObjFunVal, outputfile, workdir)
+    return
 
 
 def DebugCase1():
@@ -208,6 +281,8 @@ def DebugCase3():
 
 if __name__=='__main__':
     # debug
-    DebugCase1()
+    # DebugCase1()
     # DebugCase2()
     # DebugCase3()
+
+    TalkToDakota()  # read from params.in, write to results.out

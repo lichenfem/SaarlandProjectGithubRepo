@@ -9,4 +9,7 @@ CroSec10/
 # exclude mat file
 *.mat
 
-
+# exclude 
+*.in
+*.out
+*.txt
